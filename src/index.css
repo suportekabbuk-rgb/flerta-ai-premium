@@ -123,7 +123,8 @@
   
   .surface-card {
     @apply bg-gradient-to-br from-surface to-card border border-border/50
-           rounded-xl shadow-elevated backdrop-blur-sm;
+           rounded-xl backdrop-blur-sm;
+    box-shadow: 0 25px 50px -12px hsl(214 58% 7% / 0.8);
   }
   
   .glass-effect {
@@ -144,12 +145,3 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
-}
