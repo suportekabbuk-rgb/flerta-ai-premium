@@ -1,1 +1,10 @@
 project_id = "loepdymvrijobjnmrmca"
+
+[functions.ocr-parse]
+verify_jwt = false
+
+[functions.suggest-replies]
+verify_jwt = false
+
+[functions.openai-chat]
+verify_jwt = false

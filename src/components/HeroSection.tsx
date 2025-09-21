@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Upload, MessageSquare, Shield, ArrowRight } from "lucide-react";
+import heroImage from "@/assets/flerta-hero.jpg";
 
 interface HeroSectionProps {
   onUploadClick: () => void;
@@ -8,8 +9,22 @@ interface HeroSectionProps {
 
 export const HeroSection = ({ onUploadClick }: HeroSectionProps) => {
   return (
-    <section className="pt-24 pb-16 px-4">
-      <div className="max-w-6xl mx-auto text-center">
+    <section className="relative pt-24 pb-16 px-4 overflow-hidden">
+      {/* Background Hero Image */}
+      <div 
+        className="absolute inset-0 z-0 opacity-20"
+        style={{
+          backgroundImage: `url(${heroImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
+      
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 z-10 bg-gradient-to-br from-background via-background/95 to-background/80" />
+      
+      <div className="relative z-20 max-w-6xl mx-auto text-center">
         {/* Hero Badge */}
         <Badge variant="secondary" className="mb-6 surface-card px-4 py-2">
           <Shield className="h-4 w-4 mr-2" />
