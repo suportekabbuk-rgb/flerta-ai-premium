@@ -1,75 +1,128 @@
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Heart, Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Upload, MessageCircle, Menu, User, LogOut } from 'lucide-react';
+import AuthDialog from './AuthDialog';
+import UploadDialog from './UploadDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-interface NavbarProps {
-  onAuthClick: () => void;
-}
+export default function Navbar() {
+  const [showAuth, setShowAuth] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-export const Navbar = ({ onAuthClick }: NavbarProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  useEffect(() => {
+    // Check current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Check if user needs onboarding
+        checkUserProfile(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const checkUserProfile = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (!profile || !profile.tone) {
+      // User needs onboarding
+      window.location.href = '/onboarding';
+    } else {
+      // User can go to dashboard
+      window.location.href = '/dashboard';
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
 
   return (
-    <nav className="fixed top-0 w-full z-50 glass-effect border-b border-border/30">
-      <div className="max-w-6xl mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <Heart className="h-8 w-8 text-accent" />
-            <span className="text-2xl font-bold gradient-text">FlertaAI</span>
-            <Badge variant="secondary" className="ml-2 text-xs">
-              BETA
-            </Badge>
-          </div>
+    <>
+      <nav className="sticky top-0 z-50 bg-surface/80 backdrop-blur-lg border-b border-border/30">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <MessageCircle className="w-8 h-8 text-primary" />
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent">
+                FlertaAI
+              </span>
+            </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-muted hover:text-primary transition-colors">
-              Recursos
-            </a>
-            <a href="#pricing" className="text-muted hover:text-primary transition-colors">
-              Preços
-            </a>
-            <a href="#privacy" className="text-muted hover:text-primary transition-colors">
-              Privacidade
-            </a>
-            <Button variant="outline" onClick={onAuthClick} className="min-h-[var(--touch-target)]">
-              Entrar
-            </Button>
-          </div>
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <>
+                  <Button
+                    onClick={() => setShowUpload(true)}
+                    className="btn-primary hidden sm:flex"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                  </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <User className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => window.location.href = '/dashboard'}>
+                        Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleSignOut}>
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sair
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => setShowAuth(true)}
+                    variant="ghost"
+                    className="hidden sm:inline-flex"
+                  >
+                    Entrar
+                  </Button>
+                  <Button
+                    onClick={() => setShowAuth(true)}
+                    className="btn-primary"
+                  >
+                    Começar Grátis
+                  </Button>
+                </>
+              )}
 
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden min-h-[var(--touch-target)] min-w-[var(--touch-target)]"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden mt-4 py-4 border-t border-border/30">
-            <div className="flex flex-col gap-4">
-              <a href="#features" className="text-muted hover:text-primary transition-colors py-2">
-                Recursos
-              </a>
-              <a href="#pricing" className="text-muted hover:text-primary transition-colors py-2">
-                Preços
-              </a>
-              <a href="#privacy" className="text-muted hover:text-primary transition-colors py-2">
-                Privacidade
-              </a>
-              <Button onClick={onAuthClick} className="btn-primary mt-2">
-                Entrar
+              <Button variant="ghost" size="icon" className="sm:hidden">
+                <Menu className="w-5 h-5" />
               </Button>
             </div>
           </div>
-        )}
-      </div>
-    </nav>
+        </div>
+      </nav>
+
+      <AuthDialog open={showAuth} onOpenChange={setShowAuth} />
+      <UploadDialog open={showUpload} onOpenChange={setShowUpload} />
+    </>
   );
-};
+}
